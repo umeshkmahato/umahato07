@@ -1,6 +1,6 @@
-# Phase 1 Architecture Knowledge Sharing
+# Architecture Knowledge Sharing (Phase 1 + Phase 2 Update)
 
-Last updated: 2026-06-26 01:32:41 +05:30
+Last updated: 2026-06-26 02:53:42 +05:30
 
 ## Domain
 **Personalization Assistant** with three runtime services behind a gateway:
@@ -95,4 +95,53 @@ CREATE TABLE users (
 ## Phase 1 Deliverable Summary
 - Architecture defined for gateway, discovery, domain service, agent service, storage, cache, messaging, and resilience.
 - Base contracts for API, DB, Redis keys, and Kafka events documented.
-- Multi-module scaffold created with app entrypoints and placeholder configs for JWT, Redis, EHCache, Kafka, Circuit Breaker, and discovery.
+- Multi-module scaffold created with app entry points and placeholder configs for JWT, Redis, EHCache, Kafka, Circuit Breaker, and discovery.
+
+## Phase 2 Implementation Update
+
+### Implemented in API Gateway
+- JWT validation for issuer, audience, and expiry.
+- Scope-based authorization:
+  - `/api/users/**` requires `user.read` or `user.write`
+  - `/api/agent/**` requires `agent.query`
+- Service routing configured via Eureka + load-balanced routes:
+  - `/api/users/**` -> `lb://user-service`
+  - `/api/agent/**` -> `lb://agent-service`
+
+### Implemented in user-service
+- PostgreSQL persistence with JPA entity/repository (`users` table).
+- REST endpoints implemented:
+  - `POST /users`
+  - `GET /users/{id}`
+  - `PUT /users/{id}`
+- Two-level caching flow implemented:
+  1. EHCache local lookup (`usersLocal`)
+  2. Redis lookup (`user:{id}`)
+  3. Postgres fallback
+  4. Cache backfill on DB hit
+- Write/update flow: DB save + cache synchronization to EHCache and Redis.
+
+### Implemented in agent-service
+- `POST /agent/query` implemented.
+- Calls `user-service` over HTTP using service discovery.
+- Uses Redis session memory key `agent-session:{sessionId}` with TTL.
+- Calls external profile score API with Resilience4j circuit breaker (`profileScore`) and fallback score.
+- Publishes `UserAgentQueried` event to Kafka topic `user-agent-events`.
+
+### Event shape in use
+```json
+{
+  "eventId": "uuid",
+  "eventType": "UserAgentQueried",
+  "timestamp": "2026-06-26T00:00:00Z",
+  "sessionId": "sess-123",
+  "userId": 101,
+  "query": "summarize my profile",
+  "resultStatus": "SUCCESS",
+  "source": "external"
+}
+```
+
+### Current note
+- Phase 2 code is implemented.
+- In this environment, full Maven verification is intermittently blocked by external artifact mirror timeout.

@@ -5,5 +5,5 @@ public record UserProfileDto(
         String email,
         String name,
         String preferences
-) {
+) implements java.io.Serializable {
 }

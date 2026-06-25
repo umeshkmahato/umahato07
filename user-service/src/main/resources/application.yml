@@ -4,8 +4,33 @@ server:
 spring:
   application:
     name: user-service
+  datasource:
+    url: ${USER_DB_URL:jdbc:postgresql://localhost:5432/userdb}
+    username: ${USER_DB_USERNAME:userapp}
+    password: ${USER_DB_PASSWORD:userapp}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  sql:
+    init:
+      mode: always
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  cache:
+    type: jcache
+    jcache:
+      config: classpath:ehcache.xml
 
 eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

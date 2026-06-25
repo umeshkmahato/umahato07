@@ -1,3 +1,4 @@
-com/umahato/common/dto/AgentQueryRequest.class
 com/umahato/common/dto/AgentQueryResponse.class
+com/umahato/common/dto/UserAgentQueriedEvent.class
+com/umahato/common/dto/AgentQueryRequest.class
 com/umahato/common/dto/UserProfileDto.class

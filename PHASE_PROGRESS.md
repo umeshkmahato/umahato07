@@ -32,14 +32,23 @@ Status: **Completed**
   - Service discovery
 
 ## Phase 2 – Core Functionality
-Status: **Not started**
+Status: **Completed (implementation)**
 
-### Planned implementation
-- JWT validation and authorization in gateway.
-- Service routing via discovery.
-- user-service persistence + two-layer caching flow (EHCache -> Redis -> Postgres).
-- agent-service orchestration with downstream call wrapped by Resilience4j circuit breaker.
-- Kafka event publication from `/agent/query`.
+### Completed items
+- API Gateway JWT validation and scope-based authorization implemented.
+- Gateway routing to `user-service` and `agent-service` implemented with Eureka + `lb://` routes.
+- user-service core persistence implemented:
+  - `users` schema
+  - JPA entity/repository/controller/service
+  - read path: EHCache -> Redis -> Postgres
+  - write path: Postgres + cache sync
+- agent-service orchestration implemented:
+  - `/agent/query`
+  - user-service HTTP call via discovery
+  - external score call with Resilience4j circuit breaker fallback
+  - Redis session context usage
+  - Kafka publish for `UserAgentQueried` event
+- Build validation attempted; blocked by external Maven mirror timeout while fetching dependencies in this environment.
 
 ## Phase 3 – Agentic GenAI, Docker, Dev Container, E2E
 Status: **Not started**

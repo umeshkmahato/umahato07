@@ -4,8 +4,35 @@ server:
 spring:
   application:
     name: agent-service
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
 eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
+
+app:
+  kafka:
+    topic: ${AGENT_EVENTS_TOPIC:user-agent-events}
+  external:
+    profile-score-url: ${PROFILE_SCORE_URL:http://localhost:8090/profile-score/{userId}}
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      profileScore:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
