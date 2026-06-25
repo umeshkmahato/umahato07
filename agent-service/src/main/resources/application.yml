@@ -13,6 +13,10 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
 
 eureka:
   client:
@@ -24,6 +28,10 @@ app:
     topic: ${AGENT_EVENTS_TOPIC:user-agent-events}
   external:
     profile-score-url: ${PROFILE_SCORE_URL:http://localhost:8090/profile-score/{userId}}
+  genai:
+    provider: ${GENAI_PROVIDER:mock}
+    model: ${GENAI_MODEL:mock-gpt}
+    api-key: ${GENAI_API_KEY:placeholder-key}
 
 resilience4j:
   circuitbreaker:

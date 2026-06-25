@@ -4,6 +4,7 @@ public record AgentQueryResponse(
         String sessionId,
         Long userId,
         String answer,
-        String source
+        String source,
+        AgentExecutionPlanDto plan
 ) {
 }

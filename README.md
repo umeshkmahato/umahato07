@@ -1,101 +1,142 @@
 # Umahato Personalization Assistant Microservices
 
-Spring Boot multi-module microservice system scaffold for a personalization assistant domain.
+Spring Boot multi-module microservice platform implementing:
+- API Gateway with JWT validation/authZ
+- Eureka service discovery
+- `user-service` with Postgres + EHCache + Redis
+- `agent-service` with Redis session memory + Kafka events + external API call via Resilience4j + mocked agentic GenAI orchestrator
 
 ## Modules
 
-- `service-discovery`: Eureka server for service registration and lookup
-- `api-gateway`: public entrypoint (planned JWT validation + routing)
-- `user-service`: user profile domain service (planned Postgres + EHCache + Redis)
-- `agent-service`: agent orchestration service (planned Redis + Kafka + downstream HTTP + circuit breaker)
-- `common-lib`: shared DTOs/contracts
+- `service-discovery`
+- `api-gateway`
+- `user-service`
+- `agent-service`
+- `common-lib`
 
-## Architecture (Phase 1)
+## High-level architecture
 
 ```text
-Client
-  -> API Gateway (JWT authN/authZ)
-      -> Eureka Service Discovery
-          -> user-service
-          -> agent-service
+Client -> API Gateway (JWT authN/authZ) -> Eureka -> user-service / agent-service
 
-user-service -> Postgres + EHCache + Redis
-agent-service -> user-service + Redis + Kafka + external API (circuit breaker)
+user-service -> Postgres + EHCache (L1) + Redis (L2)
+agent-service -> user-service + Redis + Kafka + external score API (circuit breaker) + AgentOrchestrator
 ```
-
-## Current Status
-
-- ✅ **Phase 1 complete**: architecture + multi-module scaffolding
-- ⏳ **Phase 2 pending**: JWT, DB, caching, circuit breaker, Kafka flow
-- ⏳ **Phase 3 pending**: agentic orchestrator, Docker, Dev Container, E2E tests
-
-Detailed docs:
-- `PHASE_PROGRESS.md`
-- `PHASE1_ARCHITECTURE_KNOWLEDGE_SHARE.md`
 
 ## Prerequisites
 
 - Java 21
-- Maven 3.9+ (or use `./mvnw`)
+- Maven 3.9+
+- Docker + Docker Compose
 
-## Build
+## Run everything with Docker Compose
 
+1. Build and start:
 ```bash
-./mvnw clean install
+docker compose up --build
 ```
 
-## Run Locally
+2. Wait for all services to become healthy/started:
+- Eureka: `http://localhost:8761`
+- Gateway health: `http://localhost:8080/internal/gateway/health`
 
-Start each service in a separate terminal, in this order:
+## Dev Container workflow
 
-1. **Service Discovery**
+1. Open this repository in VS Code.
+2. Run **Reopen in Container**.
+3. Inside the container:
 ```bash
-./mvnw -pl service-discovery spring-boot:run
+./mvnw clean package -DskipTests
+docker compose up --build
 ```
 
-2. **User Service**
+## Issue a test JWT (HS256)
+
+Gateway defaults:
+- `JWT_ISSUER=umahato-auth`
+- `JWT_AUDIENCE=umahato-api`
+- `JWT_SECRET=umahato-dev-secret-key-please-change-12345`
+
+Generate a token:
 ```bash
-./mvnw -pl user-service spring-boot:run
+python - <<'PY'
+import base64, json, hmac, hashlib, time
+def b64(x): return base64.urlsafe_b64encode(json.dumps(x,separators=(',',':')).encode()).rstrip(b'=')
+header={"alg":"HS256","typ":"JWT"}
+payload={
+  "iss":"umahato-auth",
+  "aud":"umahato-api",
+  "sub":"demo-user",
+  "scope":"user.read user.write agent.query",
+  "iat":int(time.time()),
+  "exp":int(time.time())+3600
+}
+secret=b"umahato-dev-secret-key-please-change-12345"
+msg=b'.'.join([b64(header),b64(payload)])
+sig=base64.urlsafe_b64encode(hmac.new(secret,msg,hashlib.sha256).digest()).rstrip(b'=')
+print((msg+b'.'+sig).decode())
+PY
 ```
 
-3. **Agent Service**
+Export token:
 ```bash
-./mvnw -pl agent-service spring-boot:run
+export TOKEN="<paste-token>"
 ```
 
-4. **API Gateway**
+## End-to-end API flow via gateway
+
+1. Create user:
 ```bash
-./mvnw -pl api-gateway spring-boot:run
+curl -X POST http://localhost:8080/api/users \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"id":101,"email":"alice@example.com","name":"Alice","preferences":"{\"theme\":\"dark\"}"}'
 ```
 
-## Default Ports
+2. Read user (demonstrates cacheable path after first call):
+```bash
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/users/101
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/users/101
+```
+
+3. Query agent:
+```bash
+curl -X POST http://localhost:8080/api/agent/query \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"sessionId":"sess-101","userId":101,"query":"summarize profile with score"}'
+```
+
+Expected behavior:
+- Gateway validates JWT and routes request.
+- Agent service fetches user from user-service.
+- Agent orchestration generates a tool plan via mocked `LanguageModelClient`.
+- Agent stores session context in Redis (`agent-session:sess-101`).
+- External score call runs under circuit breaker (fallback returns default if downstream fails).
+- Kafka event is published to `user-agent-events`.
+
+## Run tests
+
+```bash
+./mvnw test
+```
+
+Included tests:
+- `user-service`: `UserControllerCachingIntegrationTest` (`/users/{id}` + caching behavior)
+- `agent-service`: `AgentQueryOrchestrationTest` (`/agent/query` orchestration with mocks)
+
+## Key ports
 
 - Eureka: `8761`
-- API Gateway: `8080`
-- User Service: `8081`
-- Agent Service: `8082`
+- Gateway: `8080`
+- user-service: `8081`
+- agent-service: `8082`
+- Postgres: `5432`
+- Redis: `6379`
+- Kafka: `9092`
+- Profile score mock: `8090`
 
-## Quick Checks
+## Additional docs
 
-```bash
-curl http://localhost:8761
-curl http://localhost:8080/internal/gateway/health
-```
-
-## Planned APIs (next phases)
-
-- `GET /users/{id}`
-- `PUT /users/{id}`
-- `POST /users`
-- `POST /agent/query`
-
-## Tech Stack
-
-- Spring Boot
-- Spring Cloud Gateway
-- Spring Cloud Netflix Eureka
-- Spring Data JPA (Postgres)
-- Redis
-- EHCache
-- Kafka
-- Resilience4j
+- `PHASE_PROGRESS.md`
+- `PHASE1_ARCHITECTURE_KNOWLEDGE_SHARE.md`

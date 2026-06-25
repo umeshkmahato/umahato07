@@ -6,12 +6,28 @@ spring:
     name: api-gateway
   cloud:
     gateway:
-      discovery:
-        locator:
-          enabled: true
-          lower-case-service-id: true
+      routes:
+        - id: user-service-route
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - StripPrefix=1
+        - id: agent-service-route
+          uri: lb://agent-service
+          predicates:
+            - Path=/api/agent/**
+          filters:
+            - StripPrefix=1
 
 eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}
+
+app:
+  security:
+    jwt:
+      issuer: ${JWT_ISSUER:umahato-auth}
+      audience: ${JWT_AUDIENCE:umahato-api}
+      secret: ${JWT_SECRET:umahato-dev-secret-key-please-change-12345}
