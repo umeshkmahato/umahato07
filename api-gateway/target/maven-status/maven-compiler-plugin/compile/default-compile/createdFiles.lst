@@ -1,0 +1,10 @@
+com/umahato/gateway/config/ServiceDiscoveryConfig.class
+com/umahato/gateway/config/EhcacheConfig.class
+com/umahato/gateway/service/GatewayRoutingService.class
+com/umahato/gateway/controller/GatewayController.class
+com/umahato/gateway/config/JwtSecurityConfig.class
+com/umahato/gateway/config/CircuitBreakerConfig.class
+com/umahato/gateway/config/KafkaConfig.class
+com/umahato/gateway/repository/GatewayRouteRepository.class
+com/umahato/gateway/ApiGatewayApplication.class
+com/umahato/gateway/config/RedisConfig.class

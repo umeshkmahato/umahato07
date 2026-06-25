@@ -1,0 +1,10 @@
+/Users/um747e/IdeaProjects/umahato/api-gateway/src/main/java/com/umahato/gateway/ApiGatewayApplication.java
+/Users/um747e/IdeaProjects/umahato/api-gateway/src/main/java/com/umahato/gateway/config/CircuitBreakerConfig.java
+/Users/um747e/IdeaProjects/umahato/api-gateway/src/main/java/com/umahato/gateway/config/EhcacheConfig.java
+/Users/um747e/IdeaProjects/umahato/api-gateway/src/main/java/com/umahato/gateway/config/JwtSecurityConfig.java
+/Users/um747e/IdeaProjects/umahato/api-gateway/src/main/java/com/umahato/gateway/config/KafkaConfig.java
+/Users/um747e/IdeaProjects/umahato/api-gateway/src/main/java/com/umahato/gateway/config/RedisConfig.java
+/Users/um747e/IdeaProjects/umahato/api-gateway/src/main/java/com/umahato/gateway/config/ServiceDiscoveryConfig.java
+/Users/um747e/IdeaProjects/umahato/api-gateway/src/main/java/com/umahato/gateway/controller/GatewayController.java
+/Users/um747e/IdeaProjects/umahato/api-gateway/src/main/java/com/umahato/gateway/repository/GatewayRouteRepository.java
+/Users/um747e/IdeaProjects/umahato/api-gateway/src/main/java/com/umahato/gateway/service/GatewayRoutingService.java

@@ -1,0 +1,11 @@
+com/umahato/user/UserServiceApplication.class
+com/umahato/user/service/UserService.class
+com/umahato/user/entity/UserProfileEntity.class
+com/umahato/user/repository/UserRepository.class
+com/umahato/user/config/JwtSecurityConfig.class
+com/umahato/user/config/RedisConfig.class
+com/umahato/user/controller/UserController.class
+com/umahato/user/config/ServiceDiscoveryConfig.class
+com/umahato/user/config/CircuitBreakerConfig.class
+com/umahato/user/config/EhcacheConfig.class
+com/umahato/user/config/KafkaConfig.class
